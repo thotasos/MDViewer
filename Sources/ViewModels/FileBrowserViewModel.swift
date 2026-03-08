@@ -24,11 +24,18 @@ class FileBrowserViewModel: ObservableObject {
         }
     }
 
+    @Published var fileListCollapsed: Bool = false {
+        didSet {
+            AppSettings.shared.fileListCollapsed = fileListCollapsed
+        }
+    }
+
     private let settings = AppSettings.shared
 
     init() {
         self.zoomLevel = settings.zoomLevel
         self.sidebarCollapsed = settings.sidebarCollapsed
+        self.fileListCollapsed = settings.fileListCollapsed
 
         if let lastFolder = settings.lastOpenedFolder {
             openFolder(lastFolder)

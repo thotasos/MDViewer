@@ -16,8 +16,10 @@ struct ContentView: View {
                     }
 
                     // File List
-                    FileListView()
-                        .frame(minWidth: 200, idealWidth: 280, maxWidth: 400)
+                    if !viewModel.fileListCollapsed {
+                        FileListView()
+                            .frame(minWidth: 200, idealWidth: 280, maxWidth: 400)
+                    }
 
                     // Preview
                     PreviewView()
@@ -34,7 +36,16 @@ struct ContentView: View {
                 }) {
                     Image(systemName: "sidebar.left")
                 }
-                .help("Toggle Sidebar")
+                .help("Toggle Folders")
+
+                Button(action: {
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        viewModel.fileListCollapsed.toggle()
+                    }
+                }) {
+                    Image(systemName: "list.bullet")
+                }
+                .help("Toggle Documents")
             }
 
             ToolbarItemGroup(placement: .principal) {

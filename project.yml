@@ -33,6 +33,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.mdviewer.app
+        INFOPLIST_KEY_CFBundleIconFile: AppIcon
         INFOPLIST_GENERATION_MODE: GeneratedFile
         INFOPLIST_KEY_CFBundleDisplayName: MDViewer
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
