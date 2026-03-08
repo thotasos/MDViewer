@@ -63,6 +63,22 @@ class FileBrowserViewModel: ObservableObject {
         }
     }
 
+    func openFile() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = false
+        panel.canChooseFiles = true
+        panel.allowsMultipleSelection = false
+        panel.allowedContentTypes = [.init(filenameExtension: "md")!]
+        panel.message = "Select a markdown file to open"
+        panel.prompt = "Open"
+
+        panel.begin { [weak self] response in
+            if response == .OK, let url = panel.url {
+                self?.openSingleFile(url)
+            }
+        }
+    }
+
     func openFolder() {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true
@@ -75,6 +91,14 @@ class FileBrowserViewModel: ObservableObject {
             if response == .OK, let url = panel.url {
                 self?.openFolder(url)
             }
+        }
+    }
+
+    private func openSingleFile(_ url: URL) {
+        let folder = url.deletingLastPathComponent()
+        openFolder(folder)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            self?.selectFile(at: url)
         }
     }
 

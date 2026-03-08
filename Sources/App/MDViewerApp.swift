@@ -15,6 +15,11 @@ struct MDViewerApp: App {
         .defaultSize(width: 1200, height: 800)
         .commands {
             CommandGroup(replacing: .newItem) {
+                Button("Open File...") {
+                    fileBrowserViewModel.openFile()
+                }
+                .keyboardShortcut("o", modifiers: [.command, .shift])
+
                 Button("Open Folder...") {
                     fileBrowserViewModel.openFolder()
                 }
