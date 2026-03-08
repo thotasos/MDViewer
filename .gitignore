@@ -1,0 +1,21 @@
+# Xcode
+.DS_Store
+build/
+DerivedData/
+*.xcuserstate
+*.xcuserdatad
+xcuserdata/
+
+# App bundle (build locally)
+MDViewer.app/
+
+# XcodeGen
+MDViewer.xcodeproj/
+
+# Swift Package Manager
+.swiftpm/
+Packages/
+
+# IDE
+.idea/
+.vscode/
