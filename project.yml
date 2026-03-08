@@ -26,6 +26,8 @@ targets:
     platform: macOS
     sources:
       - Sources
+      - path: Resources/Assets.xcassets
+        type: folder
     resources:
       - Resources
     settings:
