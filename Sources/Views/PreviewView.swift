@@ -112,7 +112,8 @@ struct PreviewView: View {
                     html: previewViewModel.htmlContent,
                     zoomLevel: viewModel.zoomLevel,
                     coordinator: $webViewCoordinator,
-                    searchText: previewViewModel.searchText
+                    searchText: previewViewModel.searchText,
+                    baseURL: file.url.deletingLastPathComponent()
                 )
                 .onAppear {
                     previewViewModel.loadMarkdown(from: file.url)
@@ -262,6 +263,7 @@ struct MarkdownWebView: NSViewRepresentable {
     let zoomLevel: CGFloat
     @Binding var coordinator: WebViewCoordinator?
     var searchText: String = ""
+    var baseURL: URL? = nil
 
     func makeNSView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
@@ -281,7 +283,7 @@ struct MarkdownWebView: NSViewRepresentable {
 
     func updateNSView(_ webView: WKWebView, context: Context) {
         if !html.isEmpty {
-            webView.loadHTMLString(html, baseURL: nil)
+            webView.loadHTMLString(html, baseURL: baseURL)
         }
 
         webView.pageZoom = zoomLevel

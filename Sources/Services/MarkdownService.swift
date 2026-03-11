@@ -159,6 +159,32 @@ class MarkdownService {
                     font-size: 13px;
                     line-height: 1.5;
                 }
+                /* Copy button for code blocks */
+                .code-copy-btn {
+                    position: absolute;
+                    top: 8px;
+                    right: 8px;
+                    padding: 4px 8px;
+                    font-size: 12px;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    opacity: 0;
+                    transition: opacity 0.2s ease;
+                    background-color: rgba(255, 255, 255, 0.1);
+                    color: inherit;
+                }
+                .code-copy-btn:hover {
+                    background-color: rgba(255, 255, 255, 0.2);
+                }
+                pre:hover .code-copy-btn {
+                    opacity: 1;
+                }
+                .code-copy-btn.copied {
+                    opacity: 1;
+                    background-color: #4CAF50;
+                    color: white;
+                }
                 ul, ol { margin: 0 0 16px 0; padding-left: 24px; }
                 li { margin: 4px 0; }
                 li > ul, li > ol { margin: 0; }
@@ -178,6 +204,13 @@ class MarkdownService {
                     text-align: left;
                 }
                 table th { font-weight: 600; }
+                table tr:nth-child(even) {
+                    background-color: rgba(128, 128, 128, 0.1);
+                }
+                table {
+                    overflow-x: auto;
+                    display: block;
+                }
                 img {
                     max-width: 100%;
                     height: auto;
@@ -289,6 +322,65 @@ class MarkdownService {
                 function getMatchCount() {
                     return document.querySelectorAll('mark.search-highlight').length;
                 }
+
+                // Image error handling
+                window.addEventListener('load', function() {
+                    var images = document.querySelectorAll('img');
+                    images.forEach(function(img) {
+                        img.addEventListener('error', function() {
+                            this.style.display = 'none';
+                            var placeholder = document.createElement('div');
+                            placeholder.className = 'image-error-placeholder';
+                            var span = document.createElement('span');
+                            span.textContent = '⚠️ Image not found';
+                            placeholder.appendChild(span);
+                            placeholder.style.cssText = 'display: inline-flex; align-items: center; padding: 8px 12px; background: #f0f0f0; border: 1px dashed #999; border-radius: 4px; color: #666; font-size: 13px;';
+                            this.parentNode.insertBefore(placeholder, this);
+                        });
+                    });
+                });
+
+                // Copy code block functionality
+                window.addEventListener('load', function() {
+                    document.querySelectorAll('pre').forEach(function(pre) {
+                        // Skip if already has a copy button
+                        if (pre.querySelector('.code-copy-btn')) return;
+
+                        var btn = document.createElement('button');
+                        btn.className = 'code-copy-btn';
+                        btn.textContent = 'Copy';
+                        btn.setAttribute('aria-label', 'Copy code to clipboard');
+
+                        btn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            var code = pre.querySelector('code');
+                            if (!code) return;
+
+                            var text = code.textContent || code.innerText;
+
+                            navigator.clipboard.writeText(text).then(function() {
+                                btn.textContent = 'Copied!';
+                                btn.classList.add('copied');
+
+                                setTimeout(function() {
+                                    btn.textContent = 'Copy';
+                                    btn.classList.remove('copied');
+                                }, 2000);
+                            }).catch(function(err) {
+                                console.error('Failed to copy:', err);
+                                btn.textContent = 'Failed';
+                                setTimeout(function() {
+                                    btn.textContent = 'Copy';
+                                }, 2000);
+                            });
+                        });
+
+                        pre.style.position = 'relative';
+                        pre.appendChild(btn);
+                    });
+                });
             </script>
         </head>
         <body>
@@ -301,6 +393,8 @@ class MarkdownService {
 
         var inList = false
         var listType = ""
+
+        var inTable = false
 
         for line in lines {
             if line.hasPrefix("```") {
@@ -379,7 +473,16 @@ class MarkdownService {
             }
             // Table
             else if line.hasPrefix("|") {
+                if !inTable {
+                    html += startTable()
+                    inTable = true
+                }
                 html += processTableLine(line) + "\n"
+            }
+            // End table when we encounter a non-table line after table rows
+            else if inTable && !line.hasPrefix("|") && !line.trimmingCharacters(in: .whitespaces).isEmpty {
+                html += endTable() + "\n"
+                inTable = false
             }
             // Empty line
             else if line.trimmingCharacters(in: .whitespaces).isEmpty {
@@ -390,6 +493,11 @@ class MarkdownService {
                 let processed = processInline(line)
                 html += "<p>\(processed)</p>\n"
             }
+        }
+
+        // Close any open table tags
+        if inTable {
+            html += endTable()
         }
 
         html += """
@@ -467,7 +575,7 @@ class MarkdownService {
         return result
     }
 
-    private var isTableRow = false
+    private var isInTable = false
 
     private func processTableLine(_ line: String) -> String {
         let cells = line
@@ -478,15 +586,29 @@ class MarkdownService {
             .components(separatedBy: "|")
 
         // Check if it's a separator row
-        if cells.allSatisfy({ $0.allSatisfy({ $0 == "-" || $0 == ":" }) }) {
+        if cells.allSatisfy({ $0.allSatisfy({ $0 == "-" || $0 == ":" || $0.isWhitespace }) && !$0.isEmpty }) {
             return ""
         }
 
-        let tag = isTableRow ? "td" : "th"
-        isTableRow = true
+        let content = cells.map { cell -> String in
+            let tag = isInTable ? "td" : "th"
+            let cellText = cell.trimmingCharacters(in: .whitespaces)
+            return "<\(tag)>\(escapeHTML(cellText))</\(tag)>"
+        }
+        isInTable = true
 
-        let content = cells.map { "<$tag>\(escapeHTML($0.trimmingCharacters(in: .whitespaces)))</$tag>" }.joined()
-        return "<tr>\(content)</tr>"
+        return "<tr>\(content.joined())</tr>"
+    }
+
+    private func startTable() -> String {
+        isInTable = false
+        return "<table>"
+    }
+
+    private func endTable() -> String {
+        let result = "</table>"
+        isInTable = false
+        return result
     }
 
     private func highlightCode(_ code: String, language: String) -> String {
