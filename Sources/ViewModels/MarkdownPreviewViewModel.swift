@@ -8,6 +8,12 @@ class MarkdownPreviewViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
 
+    // Search state
+    @Published var searchText: String = ""
+    @Published var searchVisible: Bool = false
+    @Published var matchCount: Int = 0
+    @Published var currentMatchIndex: Int = 0
+
     private var currentFileURL: URL?
 
     func loadMarkdown(from url: URL) {
@@ -16,6 +22,7 @@ class MarkdownPreviewViewModel: ObservableObject {
         currentFileURL = url
         isLoading = true
         errorMessage = nil
+        clearSearch()
 
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             do {
@@ -39,10 +46,25 @@ class MarkdownPreviewViewModel: ObservableObject {
         }
     }
 
+    func clearSearch() {
+        searchText = ""
+        searchVisible = false
+        matchCount = 0
+        currentMatchIndex = 0
+    }
+
+    func toggleSearch() {
+        searchVisible.toggle()
+        if !searchVisible {
+            clearSearch()
+        }
+    }
+
     func clear() {
         currentFileURL = nil
         htmlContent = ""
         headings = []
         errorMessage = nil
+        clearSearch()
     }
 }

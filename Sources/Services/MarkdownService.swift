@@ -195,7 +195,101 @@ class MarkdownService {
                 .task-list-item input {
                     margin-right: 8px;
                 }
+                /* Search highlight */
+                .search-highlight {
+                    background-color: #FFEB3B;
+                    color: #000000;
+                    padding: 1px 2px;
+                    border-radius: 2px;
+                }
+                .search-highlight.current {
+                    background-color: #FF9800;
+                    outline: 2px solid #E65100;
+                }
+                @media (prefers-color-scheme: dark) {
+                    .search-highlight {
+                        background-color: #FF8F00;
+                        color: #FFFFFF;
+                    }
+                    .search-highlight.current {
+                        background-color: #FF6F00;
+                        outline: 2px solid #FFAB00;
+                    }
+                }
             </style>
+            <script>
+                function highlightSearch(term) {
+                    clearHighlights();
+                    if (!term || term.length === 0) return 0;
+
+                    const regex = new RegExp('(' + escapeRegExp(term) + ')', 'gi');
+                    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+                    const textNodes = [];
+                    while(walker.nextNode()) textNodes.push(walker.currentNode);
+
+                    let count = 0;
+                    textNodes.forEach(node => {
+                        if (node.parentNode.tagName === 'SCRIPT' || node.parentNode.tagName === 'STYLE') return;
+                        const text = node.textContent;
+                        if (regex.test(text)) {
+                            const span = document.createElement('span');
+                            span.innerHTML = text.replace(regex, '<mark class="search-highlight">$1</mark>');
+                            node.parentNode.replaceChild(span, node);
+                            count += (text.match(regex) || []).length;
+                        }
+                        regex.lastIndex = 0;
+                    });
+                    return count;
+                }
+
+                function clearHighlights() {
+                    const marks = document.querySelectorAll('mark.search-highlight');
+                    marks.forEach(mark => {
+                        const parent = mark.parentNode;
+                        parent.replaceChild(document.createTextNode(mark.textContent), mark);
+                        parent.normalize();
+                    });
+                }
+
+                function scrollToNextMatch() {
+                    const marks = document.querySelectorAll('mark.search-highlight');
+                    if (marks.length === 0) return false;
+
+                    let current = document.querySelector('mark.search-highlight.current');
+                    let index = current ? Array.from(marks).indexOf(current) : -1;
+
+                    marks.forEach(m => m.classList.remove('current'));
+
+                    let nextIndex = (index + 1) % marks.length;
+                    marks[nextIndex].classList.add('current');
+                    marks[nextIndex].scrollIntoView({behavior: 'smooth', block: 'center'});
+                    return true;
+                }
+
+                function scrollToPreviousMatch() {
+                    const marks = document.querySelectorAll('mark.search-highlight');
+                    if (marks.length === 0) return false;
+
+                    let current = document.querySelector('mark.search-highlight.current');
+                    let index = current ? Array.from(marks).indexOf(current) : marks.length;
+
+                    marks.forEach(m => m.classList.remove('current'));
+
+                    let prevIndex = index - 1;
+                    if (prevIndex < 0) prevIndex = marks.length - 1;
+                    marks[prevIndex].classList.add('current');
+                    marks[prevIndex].scrollIntoView({behavior: 'smooth', block: 'center'});
+                    return true;
+                }
+
+                function escapeRegExp(string) {
+                    return string.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');
+                }
+
+                function getMatchCount() {
+                    return document.querySelectorAll('mark.search-highlight').length;
+                }
+            </script>
         </head>
         <body>
 

@@ -93,7 +93,13 @@
 - Open Folder button
 - Zoom controls (-, +, fit)
 - View mode toggle (single page, continuous)
-- Search in document
+- **Search in document** - Search field in preview header
+  - Real-time search as you type
+  - Highlight all matches in yellow
+  - Navigate between matches (next/previous)
+  - Match count display
+  - Cmd+F to focus search
+  - Escape to clear/close search
 
 #### Empty States
 - Welcome screen with "Open Folder" prominent button
@@ -116,6 +122,8 @@
 - Cmd+O to open folder
 - Cmd+W to close window
 - Cmd+Q to quit
+- Cmd+F to focus search
+- Escape to clear search
 - Click outline item to navigate to section
 
 ## 3. Functionality Specification
@@ -132,18 +140,12 @@
 
 2. **P1 - Should Have:**
    - Zoom in/out
-   - Search within document
-   - Copy code blocks
-   - Image support
-   - Table rendering
-
-3. **P1 - Should Have:**
-   - Zoom in/out
-   - Search within document
    - Copy code blocks
    - Image support
    - Table rendering
    - Document Outline/Table of Contents
+   - **Search within document** ✅ IMPLEMENTED
+   - Recent folders ✅ IMPLEMENTED
 
 4. **P2 - Nice to Have:**
    - Recent folders
