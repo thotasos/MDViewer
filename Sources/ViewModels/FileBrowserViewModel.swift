@@ -130,6 +130,7 @@ class FileBrowserViewModel: ObservableObject {
                 self?.selectedFolder = url
                 self?.markdownFiles = files
                 self?.settings.lastOpenedFolder = url
+                self?.settings.addToRecentFolders(url)
                 self?.showWelcome = false
                 self?.isLoading = false
 

@@ -4,6 +4,7 @@ import SwiftUI
 struct MDViewerApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var fileBrowserViewModel = FileBrowserViewModel()
+    @StateObject private var appSettings = AppSettings.shared
 
     var body: some Scene {
         WindowGroup {
@@ -24,6 +25,21 @@ struct MDViewerApp: App {
                     fileBrowserViewModel.openFolder()
                 }
                 .keyboardShortcut("o", modifiers: .command)
+
+                if !appSettings.recentFolders.isEmpty {
+                    Divider()
+                    Menu("Open Recent") {
+                        ForEach(appSettings.recentFolders, id: \.self) { url in
+                            Button(url.lastPathComponent) {
+                                fileBrowserViewModel.openFolder(url)
+                            }
+                        }
+                        Divider()
+                        Button("Clear Recent") {
+                            appSettings.clearRecentFolders()
+                        }
+                    }
+                }
             }
             CommandGroup(after: .toolbar) {
                 Button("Zoom In") {

@@ -4,16 +4,26 @@ class AppSettings: ObservableObject {
     static let shared = AppSettings()
 
     private let lastFolderKey = "lastOpenedFolder"
+    private let recentFoldersKey = "recentFolders"
     private let sidebarCollapsedKey = "sidebarCollapsed"
     private let fileListCollapsedKey = "fileListCollapsed"
     private let outlineCollapsedKey = "outlineCollapsed"
     private let zoomLevelKey = "zoomLevel"
+
+    private let maxRecentFolders = 10
 
     @Published var lastOpenedFolder: URL? {
         didSet {
             if let url = lastOpenedFolder {
                 UserDefaults.standard.set(url.path, forKey: lastFolderKey)
             }
+        }
+    }
+
+    @Published var recentFolders: [URL] = [] {
+        didSet {
+            let paths = recentFolders.map { $0.path }
+            UserDefaults.standard.set(paths, forKey: recentFoldersKey)
         }
     }
 
@@ -55,5 +65,28 @@ class AppSettings: ObservableObject {
                 self.lastOpenedFolder = url
             }
         }
+
+        if let paths = UserDefaults.standard.stringArray(forKey: recentFoldersKey) {
+            self.recentFolders = paths
+                .map { URL(fileURLWithPath: $0) }
+                .filter { FileManager.default.fileExists(atPath: $0.path) }
+        }
+    }
+
+    func addToRecentFolders(_ url: URL) {
+        var updated = recentFolders.filter { $0 != url }
+        updated.insert(url, at: 0)
+        if updated.count > maxRecentFolders {
+            updated = Array(updated.prefix(maxRecentFolders))
+        }
+        recentFolders = updated
+    }
+
+    func removeFromRecentFolders(_ url: URL) {
+        recentFolders = recentFolders.filter { $0 != url }
+    }
+
+    func clearRecentFolders() {
+        recentFolders = []
     }
 }
