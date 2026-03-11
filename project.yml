@@ -47,6 +47,20 @@ targets:
     dependencies:
       - package: Highlightr
 
+  MDViewerTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - Tests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mdviewer.app.tests
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleExecutable: MDViewerTests
+        INFOPLIST_KEY_CFBundleIdentifier: com.mdviewer.app.tests
+    dependencies:
+      - target: MDViewer
+
 schemes:
   MDViewer:
     build:
@@ -60,3 +74,14 @@ schemes:
       config: Debug
     archive:
       config: Release
+
+  MDViewerTests:
+    build:
+      targets:
+        MDViewerTests: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - MDViewerTests

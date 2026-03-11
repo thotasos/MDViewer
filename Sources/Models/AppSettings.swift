@@ -6,6 +6,7 @@ class AppSettings: ObservableObject {
     private let lastFolderKey = "lastOpenedFolder"
     private let sidebarCollapsedKey = "sidebarCollapsed"
     private let fileListCollapsedKey = "fileListCollapsed"
+    private let outlineCollapsedKey = "outlineCollapsed"
     private let zoomLevelKey = "zoomLevel"
 
     @Published var lastOpenedFolder: URL? {
@@ -28,6 +29,12 @@ class AppSettings: ObservableObject {
         }
     }
 
+    @Published var outlineCollapsed: Bool {
+        didSet {
+            UserDefaults.standard.set(outlineCollapsed, forKey: outlineCollapsedKey)
+        }
+    }
+
     @Published var zoomLevel: CGFloat {
         didSet {
             UserDefaults.standard.set(zoomLevel, forKey: zoomLevelKey)
@@ -40,6 +47,7 @@ class AppSettings: ObservableObject {
 
         self.sidebarCollapsed = UserDefaults.standard.bool(forKey: sidebarCollapsedKey)
         self.fileListCollapsed = UserDefaults.standard.bool(forKey: fileListCollapsedKey)
+        self.outlineCollapsed = UserDefaults.standard.bool(forKey: outlineCollapsedKey)
 
         if let path = UserDefaults.standard.string(forKey: lastFolderKey) {
             let url = URL(fileURLWithPath: path)

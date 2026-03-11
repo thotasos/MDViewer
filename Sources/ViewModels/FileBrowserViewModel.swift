@@ -30,12 +30,19 @@ class FileBrowserViewModel: ObservableObject {
         }
     }
 
+    @Published var outlineCollapsed: Bool = false {
+        didSet {
+            AppSettings.shared.outlineCollapsed = outlineCollapsed
+        }
+    }
+
     private let settings = AppSettings.shared
 
     init() {
         self.zoomLevel = settings.zoomLevel
         self.sidebarCollapsed = settings.sidebarCollapsed
         self.fileListCollapsed = settings.fileListCollapsed
+        self.outlineCollapsed = settings.outlineCollapsed
 
         if let lastFolder = settings.lastOpenedFolder {
             openFolder(lastFolder)

@@ -4,6 +4,7 @@ import WebKit
 struct PreviewView: View {
     @EnvironmentObject var viewModel: FileBrowserViewModel
     @StateObject private var previewViewModel = MarkdownPreviewViewModel()
+    @State private var webViewCoordinator: WebViewCoordinator?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -19,6 +20,19 @@ struct PreviewView: View {
 
                     Spacer()
 
+                    // Outline toggle button
+                    if !previewViewModel.headings.isEmpty {
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                viewModel.outlineCollapsed.toggle()
+                            }
+                        }) {
+                            Image(systemName: viewModel.outlineCollapsed ? "list.bullet" : "list.bullet.rectangle")
+                        }
+                        .buttonStyle(.borderless)
+                        .help("Toggle Document Outline")
+                    }
+
                     Text(file.formattedSize)
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -28,19 +42,37 @@ struct PreviewView: View {
                 .background(Color(nsColor: .controlBackgroundColor))
 
                 Divider()
+
+                // Document Outline
+                if !previewViewModel.headings.isEmpty && !viewModel.outlineCollapsed {
+                    DocumentOutlineView(
+                        headings: previewViewModel.headings,
+                        onSelectHeading: { heading in
+                            webViewCoordinator?.scrollToHeading(heading.anchor)
+                        }
+                    )
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+
+                    Divider()
+                }
             }
 
             // Content
             if let file = viewModel.selectedFile {
-                MarkdownWebView(html: previewViewModel.htmlContent, zoomLevel: viewModel.zoomLevel)
-                    .onAppear {
+                MarkdownWebView(
+                    html: previewViewModel.htmlContent,
+                    zoomLevel: viewModel.zoomLevel,
+                    coordinator: $webViewCoordinator
+                )
+                .onAppear {
+                    previewViewModel.loadMarkdown(from: file.url)
+                }
+                .onChange(of: viewModel.selectedFile?.id) { _ in
+                    if let file = viewModel.selectedFile {
                         previewViewModel.loadMarkdown(from: file.url)
                     }
-                    .onChange(of: viewModel.selectedFile?.id) { _ in
-                        if let file = viewModel.selectedFile {
-                            previewViewModel.loadMarkdown(from: file.url)
-                        }
-                    }
+                }
             } else {
                 VStack(spacing: 16) {
                     Image(systemName: "doc.text")
@@ -62,9 +94,19 @@ struct PreviewView: View {
     }
 }
 
+class WebViewCoordinator: NSObject {
+    weak var webView: WKWebView?
+
+    func scrollToHeading(_ anchor: String) {
+        let js = "document.getElementById('\(anchor)').scrollIntoView({behavior: 'smooth', block: 'start'});"
+        webView?.evaluateJavaScript(js, completionHandler: nil)
+    }
+}
+
 struct MarkdownWebView: NSViewRepresentable {
     let html: String
     let zoomLevel: CGFloat
+    @Binding var coordinator: WebViewCoordinator?
 
     func makeNSView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
@@ -72,6 +114,12 @@ struct MarkdownWebView: NSViewRepresentable {
 
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.setValue(false, forKey: "drawsBackground")
+
+        let newCoordinator = WebViewCoordinator()
+        newCoordinator.webView = webView
+        DispatchQueue.main.async {
+            self.coordinator = newCoordinator
+        }
 
         return webView
     }

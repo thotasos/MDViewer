@@ -2,6 +2,13 @@ import Foundation
 import AppKit
 import Highlightr
 
+struct Heading: Identifiable, Equatable {
+    let id = UUID()
+    let level: Int
+    let text: String
+    let anchor: String
+}
+
 class MarkdownService {
     static let shared = MarkdownService()
 
@@ -10,6 +17,73 @@ class MarkdownService {
     private init() {
         self.highlightr = Highlightr()
         highlightr?.setTheme(to: "atom-one-dark")
+    }
+
+    func extractHeadings(from markdown: String) -> [Heading] {
+        var headings: [Heading] = []
+        let lines = markdown.components(separatedBy: .newlines)
+
+        for line in lines {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+
+            if trimmed.hasPrefix("# ") {
+                let text = String(trimmed.dropFirst(2)).trimmingCharacters(in: .whitespaces)
+                let cleanText = removeInlineFormatting(text)
+                headings.append(Heading(level: 1, text: cleanText, anchor: generateAnchor(from: cleanText)))
+            } else if trimmed.hasPrefix("## ") {
+                let text = String(trimmed.dropFirst(3)).trimmingCharacters(in: .whitespaces)
+                let cleanText = removeInlineFormatting(text)
+                headings.append(Heading(level: 2, text: cleanText, anchor: generateAnchor(from: cleanText)))
+            } else if trimmed.hasPrefix("### ") {
+                let text = String(trimmed.dropFirst(4)).trimmingCharacters(in: .whitespaces)
+                let cleanText = removeInlineFormatting(text)
+                headings.append(Heading(level: 3, text: cleanText, anchor: generateAnchor(from: cleanText)))
+            } else if trimmed.hasPrefix("#### ") {
+                let text = String(trimmed.dropFirst(5)).trimmingCharacters(in: .whitespaces)
+                let cleanText = removeInlineFormatting(text)
+                headings.append(Heading(level: 4, text: cleanText, anchor: generateAnchor(from: cleanText)))
+            } else if trimmed.hasPrefix("##### ") {
+                let text = String(trimmed.dropFirst(6)).trimmingCharacters(in: .whitespaces)
+                let cleanText = removeInlineFormatting(text)
+                headings.append(Heading(level: 5, text: cleanText, anchor: generateAnchor(from: cleanText)))
+            } else if trimmed.hasPrefix("###### ") {
+                let text = String(trimmed.dropFirst(7)).trimmingCharacters(in: .whitespaces)
+                let cleanText = removeInlineFormatting(text)
+                headings.append(Heading(level: 6, text: cleanText, anchor: generateAnchor(from: cleanText)))
+            }
+        }
+
+        return headings
+    }
+
+    private func removeInlineFormatting(_ text: String) -> String {
+        var result = text
+
+        // Remove bold: **text** or __text__
+        result = result.replacingOccurrences(of: #"\*\*(.+?)\*\*"#, with: "$1", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"__(.+?)__"#, with: "$1", options: .regularExpression)
+
+        // Remove italic: *text* or _text_
+        result = result.replacingOccurrences(of: #"\*(.+?)\*"#, with: "$1", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"_(.+?)_"#, with: "$1", options: .regularExpression)
+
+        // Remove inline code: `code`
+        result = result.replacingOccurrences(of: #"`(.+?)`"#, with: "$1", options: .regularExpression)
+
+        // Remove links: [text](url)
+        result = result.replacingOccurrences(of: #"\[(.+?)\]\(.+?\)"#, with: "$1", options: .regularExpression)
+
+        // Remove images: ![alt](url)
+        result = result.replacingOccurrences(of: #"!\[(.*?)\]\(.+?\)"#, with: "$1", options: .regularExpression)
+
+        return result.trimmingCharacters(in: .whitespaces)
+    }
+
+    private func generateAnchor(from text: String) -> String {
+        return text
+            .lowercased()
+            .replacingOccurrences(of: " ", with: "-")
+            .replacingOccurrences(of: "[^a-z0-9-]", with: "", options: .regularExpression)
     }
 
     func convertToHTML(_ markdown: String) -> String {
@@ -158,17 +232,29 @@ class MarkdownService {
 
             // Headers
             if line.hasPrefix("# ") {
-                html += "<h1>\(escapeHTML(String(line.dropFirst(2))))</h1>\n"
+                let text = String(line.dropFirst(2))
+                let anchor = generateAnchor(from: removeInlineFormatting(text))
+                html += "<h1 id=\"\(anchor)\">\(escapeHTML(text))</h1>\n"
             } else if line.hasPrefix("## ") {
-                html += "<h2>\(escapeHTML(String(line.dropFirst(3))))</h2>\n"
+                let text = String(line.dropFirst(3))
+                let anchor = generateAnchor(from: removeInlineFormatting(text))
+                html += "<h2 id=\"\(anchor)\">\(escapeHTML(text))</h2>\n"
             } else if line.hasPrefix("### ") {
-                html += "<h3>\(escapeHTML(String(line.dropFirst(4))))</h3>\n"
+                let text = String(line.dropFirst(4))
+                let anchor = generateAnchor(from: removeInlineFormatting(text))
+                html += "<h3 id=\"\(anchor)\">\(escapeHTML(text))</h3>\n"
             } else if line.hasPrefix("#### ") {
-                html += "<h4>\(escapeHTML(String(line.dropFirst(5))))</h4>\n"
+                let text = String(line.dropFirst(5))
+                let anchor = generateAnchor(from: removeInlineFormatting(text))
+                html += "<h4 id=\"\(anchor)\">\(escapeHTML(text))</h4>\n"
             } else if line.hasPrefix("##### ") {
-                html += "<h5>\(escapeHTML(String(line.dropFirst(6))))</h5>\n"
+                let text = String(line.dropFirst(6))
+                let anchor = generateAnchor(from: removeInlineFormatting(text))
+                html += "<h5 id=\"\(anchor)\">\(escapeHTML(text))</h5>\n"
             } else if line.hasPrefix("###### ") {
-                html += "<h6>\(escapeHTML(String(line.dropFirst(7))))</h6>\n"
+                let text = String(line.dropFirst(7))
+                let anchor = generateAnchor(from: removeInlineFormatting(text))
+                html += "<h6 id=\"\(anchor)\">\(escapeHTML(text))</h6>\n"
             }
             // Horizontal rule
             else if line.hasPrefix("---") || line.hasPrefix("***") || line.hasPrefix("___") {

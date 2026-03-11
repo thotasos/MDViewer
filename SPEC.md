@@ -84,6 +84,10 @@
 - Smooth scrolling
 - Zoom support (Cmd+/Cmd-)
 - Copy code button on code blocks
+- **Document Outline** - Collapsible table of contents showing all headings (H1-H6)
+  - Click any heading to scroll to that section
+  - Visual hierarchy with indentation for nested headings
+  - Toggle button in preview header
 
 #### Toolbar
 - Open Folder button
@@ -112,6 +116,7 @@
 - Cmd+O to open folder
 - Cmd+W to close window
 - Cmd+Q to quit
+- Click outline item to navigate to section
 
 ## 3. Functionality Specification
 
@@ -132,7 +137,15 @@
    - Image support
    - Table rendering
 
-3. **P2 - Nice to Have:**
+3. **P1 - Should Have:**
+   - Zoom in/out
+   - Search within document
+   - Copy code blocks
+   - Image support
+   - Table rendering
+   - Document Outline/Table of Contents
+
+4. **P2 - Nice to Have:**
    - Recent folders
    - Print support
    - Share menu
